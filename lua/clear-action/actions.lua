@@ -43,6 +43,35 @@ local function on_code_action_results(results, context, options)
     on_select(action_tuples[1])
   else
     if config.options.popup.enable then
+      local import_tuples = vim.tbl_filter(
+        function(tuple) return tuple[2].title:find("[iI]mport") end,
+        action_tuples
+      )
+
+      if #import_tuples == 1 then
+        on_select(import_tuples[1])
+        vim.notify(import_tuples[1][2].title)
+        vim.lsp.buf.format({ timeout_ms = 60000 })
+        return
+      end
+
+      require("utils.list").stable_sort(action_tuples, function(tuple1, tuple2)
+        if
+          tuple1[2].title:lower():find("import") and (not tuple2[2].title:lower():find("import"))
+        then
+          return true
+        end
+
+        if
+          not tuple1[2].title:lower():find("disable eslint")
+          and (tuple2[2].title:lower():find("disable eslint"))
+        then
+          return true
+        end
+
+        return false
+      end)
+
       popup.select(action_tuples, on_select)
     else
       vim.ui.select(action_tuples, {
