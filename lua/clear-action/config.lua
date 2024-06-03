@@ -2,9 +2,11 @@ local M = {}
 
 ---@class clear-action.options
 local defaults = {
+  silent = true,
   signs = {
     enable = true,
     combine = false,
+    priority = 200,
     position = "eol", -- "right_align" | "overlay""
     separator = " ",
     show_count = true,
@@ -29,10 +31,12 @@ local defaults = {
     enable = true,
     center = false,
     border = "rounded",
+    hide_cursor = false,
     highlights = {
       header = "CodeActionHeader",
       label = "CodeActionLabel",
       title = "CodeActionTitle",
+      lsp = "Comment",
     },
   },
   mappings = {
@@ -49,6 +53,7 @@ local defaults = {
     actions = {},
   },
   quickfix_filters = {},
+  action_labels = {},
 }
 
 ---@type clear-action.options

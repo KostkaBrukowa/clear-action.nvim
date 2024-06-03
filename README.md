@@ -34,9 +34,11 @@ The default configuration:
 
 ```lua
 {
+  silent = true, -- dismiss code action requests errors
   signs = {
     enable = true,
     combine = false, -- combines all action kinds into a single sign
+    priority = 200, -- extmark priority
     position = "eol", -- "right_align" | "overlay"
     separator = " ", -- signs separator
     show_count = true, -- show the number of each action kind
@@ -47,7 +49,7 @@ The default configuration:
       quickfix = "🔧",
       refactor = "💡",
       source = "🔗",
-      combined = "💡", -- used when combine is set to true
+      combined = "💡", -- used when combine is set to true or as a fallback when there is no action kind
     },
     highlights = { -- highlight groups
       quickfix = "NonText",
@@ -57,10 +59,12 @@ The default configuration:
       label = "NonText",
     },
   },
-  popup = { -- remplaces the default prompt when selecting code actions
+  popup = { -- replaces the default prompt when selecting code actions
     enable = true,
     center = false,
     border = "rounded",
+    hide_cursor = false,
+    hide_client = false, -- hide displaying name of LSP client
     highlights = {
       header = "CodeActionHeader",
       label = "CodeActionLabel",
@@ -70,7 +74,9 @@ The default configuration:
   mappings = {
     -- The values can either be a string or a string tuple (with description)
     -- example: "<leader>aq" | { "<leader>aq", "Quickfix" }
-    code_acton = nil, -- a modified version of `vim.lsp.buf.code_action`
+    -- Or if you want more control: { key = "<leader>aq", mode = { "n" }, options = { desc = "Quickfix" } }
+    -- `options` accetps the same keys as vim.keymap.set()
+    code_action = nil, -- a modified version of `vim.lsp.buf.code_action`
     apply_first = nil, -- directly applies the first code action
     -- These are just basically `vim.lsp.buf.code_action` with the `apply` option with some filters
     -- If there's only one code action, it gets automatically applied.
@@ -102,6 +108,14 @@ The default configuration:
     -- },
     -- ["lua_ls"] = {
     --   ["unused-local"] = "Disable diagnostics on this line",
+    -- },
+  },
+  action_labels = {
+    -- example:
+    -- ["dartls"] = {
+    --   "Wrap with widget..." = "w",
+    --   "Wrap with Padding" = "p",
+    --   "Wrap with Center" = "c",
     -- },
   },
 }

@@ -1,5 +1,7 @@
 local M = {}
 
+local config = require("clear-action.config")
+
 local function apply_action(action, client, ctx)
   if action.edit then
     vim.lsp.util.apply_workspace_edit(action.edit, client.offset_encoding)
@@ -23,7 +25,7 @@ end
 
 M.code_action_request = function(bufnr, params, on_result)
   vim.lsp.buf_request(bufnr, "textDocument/codeAction", params, function(error, results, context)
-    if error then
+    if error and not config.options.silent then
       local message = type(error) == "string" and error or error.message
       vim.notify("code action: " .. message, vim.log.levels.WARN)
     end
@@ -33,7 +35,7 @@ end
 
 M.code_action_request_all = function(bufnr, params, on_result)
   vim.lsp.buf_request_all(bufnr, "textDocument/codeAction", params, function(results)
-    if results then on_result(results) end
+    if results then on_result(results, params.range.start.line, bufnr) end
   end)
 end
 
@@ -79,6 +81,42 @@ M.range_from_selection = function(bufnr, mode)
     ["start"] = { start_row, start_col - 1 },
     ["end"] = { end_row, end_col - 1 },
   }
+end
+
+M.get_current_line_diagnostics = function()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local row = vim.api.nvim_win_get_cursor(0)[1]
+  local diagnostics = vim.diagnostic.get(bufnr, { lnum = row - 1 })
+  local lsp_diagnostics = vim.tbl_map(function(value)
+    local diagnostic = {
+      code = value.code,
+      message = value.message,
+      severity = value.severity,
+      source = value.source,
+      range = {
+        start = {
+          character = value.col,
+          line = value.lnum,
+        },
+        ["end"] = {
+          character = value.end_col,
+          line = value.end_lnum,
+        },
+      },
+    }
+    local lsp_data = vim.tbl_get(value, "user_data", "lsp")
+
+    if lsp_data then
+      diagnostic.codeDescription = lsp_data.codeDescription
+      diagnostic.tags = lsp_data.tags
+      diagnostic.relatedInformation = lsp_data.relatedInformation
+      diagnostic.data = lsp_data.data
+    end
+
+    return diagnostic
+  end, diagnostics)
+
+  return lsp_diagnostics
 end
 
 return M

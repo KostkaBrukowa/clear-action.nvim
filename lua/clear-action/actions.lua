@@ -21,16 +21,19 @@ local function on_code_action_results(results, context, options)
 
     local client = vim.lsp.get_client_by_id(action_tuple[1])
     local action = action_tuple[2]
-    local ctx = { bufnr = context.bufnr }
 
-    utils.handle_action(action, client, ctx)
+    utils.handle_action(action, client, context)
   end
 
   local action_tuples = {}
 
   for client_id, result in pairs(results) do
     for _, action in pairs(result.result or {}) do
-      if action_filter(action) then table.insert(action_tuples, { client_id, action }) end
+      if action_filter(action) then
+        action.title = action.title:gsub("\r\n", "\\r\\n")
+        action.title = action.title:gsub("\n", "\\n")
+        table.insert(action_tuples, { client_id, action })
+      end
     end
   end
 
@@ -78,8 +81,7 @@ local function on_code_action_results(results, context, options)
         prompt = "Code actions:",
         kind = "codeaction",
         format_item = function(action_tuple)
-          local action = action_tuple[2]
-          return vim.trim(action.title)
+          return action_tuple[2].title
         end,
       }, on_select)
     end
@@ -99,7 +101,7 @@ local function code_action(options)
     context.triggerKind = vim.lsp.protocol.CodeActionTriggerKind.Invoked
   end
   if not context.diagnostics then
-    context.diagnostics = vim.lsp.diagnostic.get_line_diagnostics(bufnr)
+    context.diagnostics = utils.get_current_line_diagnostics()
   end
 
   local mode = vim.api.nvim_get_mode().mode
@@ -117,7 +119,7 @@ local function code_action(options)
   params.context = context
 
   utils.code_action_request_all(bufnr, params, function(results)
-    local ctx = { bufnr = bufnr }
+    local ctx = { bufnr = bufnr, method = "textDocument/codeAction", params = params }
     on_code_action_results(results, ctx, options)
   end)
 end
@@ -151,7 +153,7 @@ M.quickfix = function(filters)
     },
     filter = function(action)
       local found = false
-      local diagnostics = vim.lsp.diagnostic.get_line_diagnostics()
+      local diagnostics = utils.get_current_line_diagnostics()
       for diag_code, fix_message in pairs(filters or {}) do
         for _, diagnostic in pairs(diagnostics) do
           if diagnostic.code == diag_code then
@@ -174,7 +176,7 @@ end
 
 ---@param filters table<string, string> | nil
 M.quickfix_prev = function(filters)
-  vim.diagnostic.get_prev()
+  vim.diagnostic.goto_prev()
   M.quickfix(filters)
 end
 
