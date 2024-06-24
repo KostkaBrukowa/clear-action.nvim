@@ -33,6 +33,13 @@ local function client_name(client_id)
   return client and client.name or ""
 end
 
+local function findIndex(table, element)
+  for i, value in ipairs(table) do
+    if value == element then return i end
+  end
+  return nil
+end
+
 local function create_popup(action_tuples)
   local opts = config.options.popup
   local max_len = 0
@@ -104,7 +111,6 @@ end
 local function create_labels(action_tuples)
   local labels = {}
   local used = {}
-  local fallback = "a"
 
   for _, value in pairs(action_tuples) do
     local title = value[2].title
@@ -123,11 +129,18 @@ local function create_labels(action_tuples)
       end
     end
   end
+
+  local fallback = "n"
   for _, value in pairs(action_tuples) do
     local title = value[2].title
+
     if not labels[title] then
+      -- stylua: ignore
+      local alphabet = {  "n", "e", "i", "o", "a", "r", "s", "t", "b", "c", "f", "g", "h", "j", "k", "l", "m", "p", "q", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", }
+      local index = findIndex(alphabet, fallback)
       while used[fallback] do
-        fallback = string.char(fallback:byte() + 1)
+        index = index + 1
+        fallback = alphabet[index]
       end
       if fallback:byte() > 122 then fallback = "A" end
       used[fallback] = true
@@ -152,6 +165,10 @@ local function apply_keymaps(win, bufnr, action_tuples, labels, on_select)
   end
 
   vim.keymap.set("n", "<Esc>", close_win, { buffer = bufnr })
+  vim.keymap.set("n", "<Enter>", function()
+    on_select(action_tuples[1])
+    close_win()
+  end, { buffer = bufnr })
 end
 
 M.select = function(action_tuples, on_select)

@@ -41,7 +41,7 @@ end
 
 M.handle_action = function(action, client, context)
   local supports_resolve = client
-      and vim.tbl_get(client.server_capabilities, "codeActionProvider", "resolveProvider")
+    and vim.tbl_get(client.server_capabilities, "codeActionProvider", "resolveProvider")
 
   if not action.edit and supports_resolve then
     client.request("codeAction/resolve", action, function(err, resolved_action)
@@ -101,8 +101,8 @@ M.get_current_line_diagnostics = function()
         ["end"] = {
           character = value.end_col,
           line = value.end_lnum,
-        }
-      }
+        },
+      },
     }
     local lsp_data = vim.tbl_get(value, "user_data", "lsp")
 
