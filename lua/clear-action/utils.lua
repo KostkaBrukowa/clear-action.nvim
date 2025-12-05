@@ -119,4 +119,23 @@ M.get_current_line_diagnostics = function()
   return lsp_diagnostics
 end
 
+M.stable_sort = function(list, comp)
+  local indexed = {}
+  for i, v in ipairs(list) do
+    indexed[i] = { index = i, value = v }
+  end
+
+  table.sort(indexed, function(a, b)
+    local result = comp(a.value, b.value)
+    if result ~= nil then
+      return result
+    end
+    return a.index < b.index
+  end)
+
+  for i, item in ipairs(indexed) do
+    list[i] = item.value
+  end
+end
+
 return M
