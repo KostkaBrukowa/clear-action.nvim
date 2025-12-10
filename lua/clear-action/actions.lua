@@ -58,7 +58,7 @@ local function on_code_action_results(results, context, options)
         return
       end
 
-      require("utils.list").stable_sort(action_tuples, function(tuple1, tuple2)
+      utils.stable_sort(action_tuples, function(tuple1, tuple2)
         if
           tuple1[2].title:lower():find("import") and (not tuple2[2].title:lower():find("import"))
         then
@@ -104,16 +104,19 @@ local function code_action(options)
     context.diagnostics = utils.get_current_line_diagnostics()
   end
 
+  local clients = vim.lsp.get_clients({ bufnr = bufnr })
+  local position_encoding = clients[1] and clients[1].offset_encoding or "utf-16"
+
   local mode = vim.api.nvim_get_mode().mode
   if options.range then
     local start = options.range.start
     local end_ = options.range["end"]
-    params = vim.lsp.util.make_given_range_params(start, end_)
+    params = vim.lsp.util.make_given_range_params(start, end_, position_encoding)
   elseif mode == "v" or mode == "V" then
     local range = utils.range_from_selection(0, mode)
-    params = vim.lsp.util.make_given_range_params(range.start, range["end"])
+    params = vim.lsp.util.make_given_range_params(range.start, range["end"], position_encoding)
   else
-    params = vim.lsp.util.make_range_params()
+    params = vim.lsp.util.make_range_params(nil, position_encoding)
   end
 
   params.context = context
